@@ -1,0 +1,59 @@
+name: Merge and Push YAML Files
+
+on:
+  push:
+    branches: [ edit ]
+
+jobs:
+  merge-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 需要写入权限来推送更改
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 获取所有历史记录，便于分支操作
+
+    - name: 拼接 YAML 文件
+      run: |
+        # 按顺序拼接文件 (a.yaml, b.yaml, c.yaml)
+        cat a.yaml b.yaml c.yaml > merged.yaml
+        
+        # 创建三个副本
+        cp merged.yaml 1.yaml
+        cp merged.yaml 2.yaml
+        cp merged.yaml 3.yaml
+        
+        # 查看生成的文件内容（可选，用于调试）
+        #echo "生成的文件内容:"
+        #cat 1.yaml
+
+    - name: 切换到 main 分支并推送文件
+      run: |
+        # 配置 Git 用户
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # 切换到 main 分支
+        git checkout main
+        
+        # 将生成的文件复制到 main 分支
+        cp ../edit/1.yaml ./
+        cp ../edit/2.yaml ./
+        cp ../edit/3.yaml ./
+        
+        # 检查是否有更改
+        if git diff --quiet; then
+          echo "没有更改需要提交"
+        else
+          # 添加更改的文件
+          git add 1.yaml 2.yaml 3.yaml
+          
+          # 提交更改
+          git commit -m "自动更新 YAML 文件 [skip ci]"
+          
+          # 推送到 main 分支
+          git push origin main
+        fi
