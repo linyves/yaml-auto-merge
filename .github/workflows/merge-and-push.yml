@@ -23,16 +23,29 @@ jobs:
         ref: main
         path: main-branch
 
-    - name: 拼接 YAML 文件
+    - name: 处理 YAML 文件拼接（无空格问题）
       run: |
         cd edit-branch
-        # 按顺序拼接文件 (a.yaml, b.yaml, c.yaml)
-        cat a.yaml b.yaml c.yaml > merged.yaml
+        
+        # 使用 awk 处理文件末尾的换行符问题
+        awk 1 a.yaml > temp_a.yaml
+        awk 1 b.yaml > temp_b.yaml
+        awk 1 c.yaml > temp_c.yaml
+        
+        # 按顺序拼接文件，确保正确处理换行
+        cat temp_a.yaml temp_b.yaml temp_c.yaml > merged.yaml
+        
+        # 清理临时文件
+        rm temp_a.yaml temp_b.yaml temp_c.yaml
         
         # 创建三个副本
         cp merged.yaml 1.yaml
         cp merged.yaml 2.yaml
         cp merged.yaml 3.yaml
+        
+        # 检查生成的文件内容（可选）
+        echo "生成的文件内容预览:"
+        head -n 5 1.yaml
 
     - name: 复制文件到 main 分支目录
       run: |
